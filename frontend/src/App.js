@@ -92,7 +92,7 @@ const AuthProvider = ({ children }) => {
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, checkAuth } = useAuth();
   const hasProcessed = useRef(false);
 
   useEffect(() => {
@@ -100,6 +100,7 @@ const AuthCallback = () => {
     hasProcessed.current = true;
 
     const processAuth = async () => {
+      // Use window.location.hash directly for reliability
       const hash = window.location.hash;
       const sessionIdMatch = hash.match(/session_id=([^&]+)/);
       
@@ -109,11 +110,19 @@ const AuthCallback = () => {
           const response = await axios.post(`${API}/auth/session`, {
             session_id: sessionId
           });
-          setUser(response.data);
+          
+          // Clear the hash from URL immediately
           window.history.replaceState(null, '', window.location.pathname);
+          
+          // Set user in context
+          setUser(response.data);
+          
+          // Navigate to dashboard with user data
           navigate('/dashboard', { replace: true, state: { user: response.data } });
         } catch (error) {
           console.error("Auth callback error:", error);
+          // Clear hash and redirect to home on error
+          window.history.replaceState(null, '', '/');
           navigate('/', { replace: true });
         }
       } else {
@@ -122,7 +131,7 @@ const AuthCallback = () => {
     };
 
     processAuth();
-  }, [navigate, setUser]);
+  }, [navigate, setUser, checkAuth]);
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -950,10 +959,10 @@ import { useParams } from "react-router-dom";
 // ==================== APP ROUTER ====================
 
 function AppRouter() {
-  const location = useLocation();
-  
-  // Check URL fragment for session_id SYNCHRONOUSLY during render
-  if (location.hash?.includes('session_id=')) {
+  // CRITICAL: Use window.location.hash directly, NOT useLocation().hash
+  // React Router's useLocation() may not capture the hash immediately on redirect
+  // This ensures session_id is detected SYNCHRONOUSLY during render
+  if (window.location.hash?.includes('session_id=')) {
     return <AuthCallback />;
   }
   

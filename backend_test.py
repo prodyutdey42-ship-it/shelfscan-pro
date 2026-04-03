@@ -8,7 +8,7 @@ import subprocess
 import time
 
 class ShelfScanAPITester:
-    def __init__(self, base_url="https://shelf-scan-3.preview.emergentagent.com"):
+    def __init__(self, base_url="https://sleepy-hypatia-2.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session_token = None
@@ -72,6 +72,15 @@ class ShelfScanAPITester:
         except Exception as e:
             self.log_test(name, False, f"Error: {str(e)}")
             return False, {}
+
+    def use_provided_test_credentials(self):
+        """Use the provided test credentials"""
+        print("\n🔧 Using provided test credentials...")
+        self.session_token = "test_session_1775201451902"
+        self.user_id = "test-user-1775201451902"
+        print(f"✅ Using session token: {self.session_token}")
+        print(f"✅ Using user ID: {self.user_id}")
+        return True
 
     def create_test_user_session(self):
         """Create test user and session in MongoDB"""
@@ -207,12 +216,16 @@ print("Session inserted: " + sessionResult.acknowledged);
         # Test unauthenticated access
         self.test_unauthenticated_endpoints()
         
-        # Create test user for authenticated tests
-        if self.create_test_user_session():
+        # Try provided test credentials first
+        if self.use_provided_test_credentials():
+            self.test_authenticated_endpoints()
+            self.test_logout()
+        # Fallback to creating new test user for authenticated tests
+        elif self.create_test_user_session():
             self.test_authenticated_endpoints()
             self.test_logout()
         else:
-            print("⚠️  Skipping authenticated tests due to MongoDB setup issues")
+            print("⚠️  Skipping authenticated tests due to credential setup issues")
         
         # Test session exchange
         self.test_session_exchange()
