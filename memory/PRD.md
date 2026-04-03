@@ -51,6 +51,13 @@ Rebuild the ShelfScan AI app with:
 - Audit Results page with compliance details
 - MongoDB collections: users, user_sessions, audits
 
+### April 3, 2026 - Auth Bug Fix
+- Fixed 401 auth error after Google OAuth login
+- Root cause: `useLocation().hash` from React Router doesn't reliably capture URL hash on OAuth redirect
+- Solution: Changed `AppRouter` to use `window.location.hash` directly instead of React Router's `location.hash`
+- AuthCallback component now properly triggers when `session_id` is in URL hash
+- Improved error handling in AuthCallback - clears hash on error before redirecting
+
 ## Prioritized Backlog
 
 ### P0 (Critical)
